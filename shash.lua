@@ -138,13 +138,14 @@ local function overlaps(e1, e2)
 end
 
 
-local function add_each_overlapping_in_cell(self, idx, e, set)
+local function each_overlapping_in_cell(self, idx, e, set, fn, ...)
   local t = self.cells[idx]
   if not t then
     return
   end
   for i, v in ipairs(t) do
-    if e ~= v and overlaps(e, v) then
+    if e ~= v and overlaps(e, v) and not set[v] then
+      fn(v[5], ...)
       set[v] = true
     end
   end
@@ -152,16 +153,14 @@ end
 
 
 local function each_overlapping_entity(self, e, fn, ...)
-  -- Init set
+  -- Init set for keeping track of which entities have already been handled
   local set = table.remove(self.tablepool) or {}
-  -- Do overlap checks and add overlapping to set
-  each_overlapping_cell(self, e, add_each_overlapping_in_cell, e, set)
-  -- Do callback for each entity in set and clear set
+  -- Do overlap checks
+  each_overlapping_cell(self, e, each_overlapping_in_cell, e, set, fn, ...)
+  -- Clear set and return to pool
   for v in pairs(set) do
-    fn(v[5], ...)
     set[v] = nil
   end
-  -- Return set to pool
   table.insert(self.tablepool, set)
 end
 

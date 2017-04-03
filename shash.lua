@@ -7,7 +7,7 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-local shash = { _version = "0.1.0" }
+local shash = { _version = "0.1.1" }
 shash.__index = shash
 
 

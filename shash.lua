@@ -7,6 +7,15 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
+-- Use LuaJIT's table.clear where possible
+local ok, table_clear = pcall(require, "table.clear")
+if not ok then
+  table_clear = function(t)
+    for k, v in pairs(t) do
+      t[k] = nil
+    end
+  end
+end
 local floor = math.floor
 local table_remove = table.remove
 local table_insert = table.insert
@@ -196,9 +205,7 @@ local function each_overlapping_entity(self, e, fn, ...)
   -- Do overlap checks
   each_overlapping_cell(self, e, each_overlapping_in_cell, e, set, fn, ...)
   -- Clear set and return to pool
-  for v in pairs(set) do
-    set[v] = nil
-  end
+  table_clear(set)
   table_insert(self.tablepool, set)
 end
 

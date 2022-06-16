@@ -95,6 +95,39 @@ function shash:remove(obj)
 end
 
 
+local function remove_from_given_cells(self, e, x1, y1, x2, y2)
+  for y = y1, y2 do
+    for x = x1, x2 do
+      local idx = coord_to_key(x, y)
+      local t = self.cells[idx]
+      local n = #t
+
+      for k, v in ipairs(t) do
+        if v == e then
+          t[k] = t[n]
+          t[n] = nil
+          break
+        end
+      end
+    end
+  end
+end
+
+
+local function insert_into_given_cells(self, e, x1, y1, x2, y2)
+  for y = y1, y2 do
+    for x = x1, x2 do
+      local idx = coord_to_key(x, y)
+      if not self.cells[idx] then
+        self.cells[idx] = { }
+      end
+
+      self.cells[idx][#self.cells[idx] + 1] = e
+    end
+  end
+end
+
+
 function shash:update(obj, x, y, w, h)
   -- Get entity from obj
   local e = self.entities[obj]
@@ -111,13 +144,13 @@ function shash:update(obj, x, y, w, h)
   local dirty = ax1 ~= bx1 or ay1 ~= by1 or ax2 ~= bx2 or ay2 ~= by2
   -- Remove from old cells
   if dirty then
-    each_overlapping_cell(self, e, remove_entity_from_cell, e)
+    remove_from_given_cells(self, e, ax1, ay1, ax2, ay2)
   end
   -- Update entity
   e[1], e[2], e[3], e[4] = x, y, x + w, y + h
   -- Add to new cells
   if dirty then
-    each_overlapping_cell(self, e, add_entity_to_cell, e)
+    insert_into_given_cells(self, e, bx1, by1, bx2, by2)
   end
 end
 

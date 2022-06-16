@@ -171,12 +171,8 @@ end
 
 function shash:clear()
   -- Clear all cells and entities
-  for k in pairs(self.cells) do
-    self.cells[k] = nil
-  end
-  for k in pairs(self.entities) do
-    self.entities[k] = nil
-  end
+  table_clear(self.cells)
+  table_clear(self.entities)
 end
 
 

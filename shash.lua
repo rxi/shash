@@ -7,6 +7,11 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
+local floor = math.floor
+local table_remove = table.remove
+local table_insert = table.insert
+
+
 local shash = { _version = "0.1.1" }
 shash.__index = shash
 
@@ -28,7 +33,7 @@ end
 
 
 local function cell_position(cellsize, x, y)
-  return math.floor(x / cellsize), math.floor(y / cellsize)
+  return floor(x / cellsize), floor(y / cellsize)
 end
 
 
@@ -49,7 +54,7 @@ local function add_entity_to_cell(self, idx, e)
   if not self.cells[idx] then
     self.cells[idx] = { e }
   else
-    table.insert(self.cells[idx], e)
+    table_insert(self.cells[idx], e)
   end
 end
 
@@ -187,14 +192,14 @@ end
 
 local function each_overlapping_entity(self, e, fn, ...)
   -- Init set for keeping track of which entities have already been handled
-  local set = table.remove(self.tablepool) or {}
+  local set = table_remove(self.tablepool) or {}
   -- Do overlap checks
   each_overlapping_cell(self, e, each_overlapping_in_cell, e, set, fn, ...)
   -- Clear set and return to pool
   for v in pairs(set) do
     set[v] = nil
   end
-  table.insert(self.tablepool, set)
+  table_insert(self.tablepool, set)
 end
 
 

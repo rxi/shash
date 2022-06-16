@@ -12,7 +12,7 @@ local table_remove = table.remove
 local table_insert = table.insert
 
 
-local shash = { _version = "0.1.1" }
+local shash = { _version = "0.1.2" }
 shash.__index = shash
 
 

@@ -7,7 +7,21 @@
 -- under the terms of the MIT license. See LICENSE for details.
 --
 
-local shash = { _version = "0.1.1" }
+-- Use LuaJIT's table.clear where possible
+local ok, table_clear = pcall(require, "table.clear")
+if not ok then
+  table_clear = function(t)
+    for k, v in pairs(t) do
+      t[k] = nil
+    end
+  end
+end
+local floor = math.floor
+local table_remove = table.remove
+local table_insert = table.insert
+
+
+local shash = { _version = "0.1.2" }
 shash.__index = shash
 
 
@@ -28,7 +42,7 @@ end
 
 
 local function cell_position(cellsize, x, y)
-  return math.floor(x / cellsize), math.floor(y / cellsize)
+  return floor(x / cellsize), floor(y / cellsize)
 end
 
 
@@ -49,7 +63,7 @@ local function add_entity_to_cell(self, idx, e)
   if not self.cells[idx] then
     self.cells[idx] = { e }
   else
-    table.insert(self.cells[idx], e)
+    table_insert(self.cells[idx], e)
   end
 end
 
@@ -95,6 +109,39 @@ function shash:remove(obj)
 end
 
 
+local function remove_from_given_cells(self, e, x1, y1, x2, y2)
+  for y = y1, y2 do
+    for x = x1, x2 do
+      local idx = coord_to_key(x, y)
+      local t = self.cells[idx]
+      local n = #t
+
+      for k, v in ipairs(t) do
+        if v == e then
+          t[k] = t[n]
+          t[n] = nil
+          break
+        end
+      end
+    end
+  end
+end
+
+
+local function insert_into_given_cells(self, e, x1, y1, x2, y2)
+  for y = y1, y2 do
+    for x = x1, x2 do
+      local idx = coord_to_key(x, y)
+      if not self.cells[idx] then
+        self.cells[idx] = { }
+      end
+
+      self.cells[idx][#self.cells[idx] + 1] = e
+    end
+  end
+end
+
+
 function shash:update(obj, x, y, w, h)
   -- Get entity from obj
   local e = self.entities[obj]
@@ -111,25 +158,21 @@ function shash:update(obj, x, y, w, h)
   local dirty = ax1 ~= bx1 or ay1 ~= by1 or ax2 ~= bx2 or ay2 ~= by2
   -- Remove from old cells
   if dirty then
-    each_overlapping_cell(self, e, remove_entity_from_cell, e)
+    remove_from_given_cells(self, e, ax1, ay1, ax2, ay2)
   end
   -- Update entity
   e[1], e[2], e[3], e[4] = x, y, x + w, y + h
   -- Add to new cells
   if dirty then
-    each_overlapping_cell(self, e, add_entity_to_cell, e)
+    insert_into_given_cells(self, e, bx1, by1, bx2, by2)
   end
 end
 
 
 function shash:clear()
   -- Clear all cells and entities
-  for k in pairs(self.cells) do
-    self.cells[k] = nil
-  end
-  for k in pairs(self.entities) do
-    self.entities[k] = nil
-  end
+  table_clear(self.cells)
+  table_clear(self.entities)
 end
 
 
@@ -144,7 +187,7 @@ local function each_overlapping_in_cell(self, idx, e, set, fn, ...)
     return
   end
   for i, v in ipairs(t) do
-    if e ~= v and overlaps(e, v) and not set[v] then
+    if overlaps(e, v) and not set[v] then
       fn(v[5], ...)
       set[v] = true
     end
@@ -154,14 +197,13 @@ end
 
 local function each_overlapping_entity(self, e, fn, ...)
   -- Init set for keeping track of which entities have already been handled
-  local set = table.remove(self.tablepool) or {}
+  local set = table_remove(self.tablepool) or {}
+  set[e] = true -- do not check object itself
   -- Do overlap checks
   each_overlapping_cell(self, e, each_overlapping_in_cell, e, set, fn, ...)
   -- Clear set and return to pool
-  for v in pairs(set) do
-    set[v] = nil
-  end
-  table.insert(self.tablepool, set)
+  table_clear(set)
+  table_insert(self.tablepool, set)
 end
 
 

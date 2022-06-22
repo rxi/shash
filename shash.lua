@@ -187,7 +187,7 @@ local function each_overlapping_in_cell(self, idx, e, set, fn, ...)
     return
   end
   for i, v in ipairs(t) do
-    if e ~= v and overlaps(e, v) and not set[v] then
+    if overlaps(e, v) and not set[v] then
       fn(v[5], ...)
       set[v] = true
     end
@@ -198,6 +198,7 @@ end
 local function each_overlapping_entity(self, e, fn, ...)
   -- Init set for keeping track of which entities have already been handled
   local set = table_remove(self.tablepool) or {}
+  set[e] = true -- do not check object itself
   -- Do overlap checks
   each_overlapping_cell(self, e, each_overlapping_in_cell, e, set, fn, ...)
   -- Clear set and return to pool
